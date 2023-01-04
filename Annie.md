@@ -2,9 +2,9 @@ https://tryhackme.com/room/annie
 
   ![image](https://user-images.githubusercontent.com/87700008/205995673-6be11335-a570-4cf0-9b72-a8829cf14cff.png)
 
-Difficulty : Medium
+#### Difficulty : Medium
 
-**Initital Recon**:
+## **Initital Recon**:
 
 Started with the quick rustscan, found 3 open ports :
 
@@ -17,7 +17,7 @@ Started with the quick rustscan, found 3 open ports :
 
 At the scan results I observed that there is AnyDesk client running on port **7070**. By looking at this I got some hint that tthis might be the point of initial access.
 
-**Exploitation:**
+#### **Exploitation:**
 
 I quckly searched for google with the AnyDesk 7070 exploit & got the results :
 ![image](https://user-images.githubusercontent.com/87700008/205997368-4f027e59-6d5b-42d1-841a-2b37990482e7.png)
@@ -48,7 +48,7 @@ Now, it's time to upgrade & stablize the shell:
 
 ![image](https://user-images.githubusercontent.com/87700008/207116033-69dc62fb-4ff1-473b-866a-4c10ae6dc89c.png)
 
-**User.txt**:
+##### **User.txt**:
 
 And, I got user flag into the home directory of the Annie itself.
 ![image](https://user-images.githubusercontent.com/87700008/207116581-e5d7d03c-4311-4300-91a4-30791fca00b0.png)
@@ -61,7 +61,7 @@ So, I quickly used a John the ripper module "ssh2john" to convert the id_rsa fil
 ![image](https://user-images.githubusercontent.com/87700008/207118733-cd5e382a-38b9-463d-9b78-a34d61000487.png)
 
 
-**Priv Esc:**
+#### **Priv Esc:**
 
 I started with manual enumeration, like checking sudo version, cron jobs, sudo permissions etc. But I found something unusual in SUID list that there is something called "/sbin/setcap"
 
@@ -91,7 +91,7 @@ This gave me the root privleges:(pwn3d!🙂)
 
 ![image](https://user-images.githubusercontent.com/87700008/207131735-9dcdb730-d448-41d3-b60c-145bdc8516b5.png)
 
-**Root.txt**
+#### **Root.txt**
 
 After successfull execution I got the root flag in root folder.
 
