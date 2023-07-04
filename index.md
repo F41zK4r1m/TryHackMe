@@ -14,6 +14,7 @@
 
   - [Eavesdropper](https://f41zk4r1m.github.io/TryHackMe/Eavesdropper) 🐧
   - [Annie](https://f41zk4r1m.github.io/TryHackMe/Annie) 🐧
+  - [Weasel](https://f41zk4r1m.github.io/TryHackMe/Weasel) 🪟
 
 ## Hard Boxes:
 
