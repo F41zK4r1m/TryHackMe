@@ -121,4 +121,63 @@ dig all fusion.corp @10.10.41.28
 ```
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/a0512a4f-b554-4df5-a843-f26aae852ba6)
 
-So, In the DNS enumeration I didn't observed anything new that I wasn't discovered in the port scan results.
+So, In the DNS enumeration I didn't observed anything new that I wasn't discovered in the port scan results. But from the vhost enumeration I found 1 more sub-domain "goods" that is running in the fusion corp network.
+
+```bash
+ffuf -H "Host: FUZZ.fusion.corp" -u http://10.10.41.28 -w /usr/share/SecLists/Discovery/DNS/bitquark-subdomains-top100000.txt -fs 53888
+```
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/08634532-5722-4bd6-8f36-e6083a40d32e)
+
+I added this new sub-domain to the hosts file as well.
+
+### web-enumeration:
+
+When I browsed through the website I observed that they are providing various IT services:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/45e99a74-5ea3-46ec-9a1f-e4966bc10643)
+
+Moving further I performed directory enueration & found new sub-directories in the result:
+
+```bash
+gobuster dir -u http://fusion.corp -t 20 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -o fusion_web -b 404,403 -k
+```
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/934bc699-5a21-452a-aece-4920ffda0f99)
+
+In one of the sub-directory "backup", I found one .ods file which contains some employee related data in it.
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/5c16b185-6c73-4bb2-9360-294183087ce9)
+
+When I checked the file, I found it contains some, employee names & their internal usernames present in the excel sheet.
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/f995d76e-3ca6-4355-a826-6bd49243af57)
+
+### Kerberoas:
+
+After extracting the username & creating a new user list I tried to perform AS-REP roasting & observed that out of 11, I got a hit for one of the user 'lparker' for which kerberoas pre-auth was disabled.
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/2fb8e203-29c4-46f8-87b1-4acf6e5c9326)
+
+I used hashcat to crack the hash & within seconds I got the plain-text password from the cracked hash. 🙂
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/b399c7da-87d6-48a7-837b-151bfa34bc3a)
+
+From the plain-text password I tried to login using Evil-winrm & I logged in successfully, also after logging in I got the first flag on user desktop.
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/cac41c78-9038-478c-9c21-197e696f9ce0)
+
+## Further enumeration:
+
+When I got the access for **lparker** I performed rid brute using CrackMapExec with his access to check for more users present in the network & I found another user from it which I wasn't found yet, i.e. '**jmurphy**'
+
+```bash
+crackmapexec smb fusion.corp -u "lparker" -p '*************' --rid-brute
+```
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/4af01907-368a-45df-92c7-7f5762fd4a1c)
+
+I tried to search any lateral movemnt vector manually but when I didn't found anything I though to just randomly run net user command against the user 'jmurphy' & guess what huge OpSec failure as the password of the user is mentioned in the comment.
+
+```PS
+net user /dom jmurphy
+```
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/98446391-f63c-4df8-aa80-1ce0a98cd3f5)
+
