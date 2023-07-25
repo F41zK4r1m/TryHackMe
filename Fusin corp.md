@@ -174,10 +174,21 @@ crackmapexec smb fusion.corp -u "lparker" -p '*************' --rid-brute
 ```
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/4af01907-368a-45df-92c7-7f5762fd4a1c)
 
-I tried to search any lateral movemnt vector manually but when I didn't found anything I though to just randomly run net user command against the user 'jmurphy' & guess what huge OpSec failure as the password of the user is mentioned in the comment.
+I tried to search for any lateral movemnt vector manually but when I didn't found anything I though to just randomly run net user command against the user 'jmurphy' & guess what huge OpSec failure as the password of the user is mentioned in the comment.
 
 ```PS
 net user /dom jmurphy
 ```
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/98446391-f63c-4df8-aa80-1ce0a98cd3f5)
+
+I used this credentials to log into the 'jmurphy' account using win-rm & got hold onto the 2nd flag. (pwn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/3b8dec52-52f8-4c3b-a618-f7d953d95c6b)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+### Privilege Escalation:
+
+
+
 
