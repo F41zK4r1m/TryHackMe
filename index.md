@@ -18,7 +18,7 @@
 
 ## Hard Boxes:
 
-  - [Fusin corp](https://f41zk4r1m.github.io/TryHackMe/Fusion_corp) 🪟
+  - [Fusin corp](https://f41zk4r1m.github.io/TryHackMe/Fusin_corp) 🪟
 
 ## Insane Boxes:
 
