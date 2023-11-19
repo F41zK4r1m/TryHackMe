@@ -15,7 +15,7 @@
   - [Eavesdropper](https://f41zk4r1m.github.io/TryHackMe/Eavesdropper) 🐧
   - [Annie](https://f41zk4r1m.github.io/TryHackMe/Annie) 🐧
   - [Weasel](https://f41zk4r1m.github.io/TryHackMe/Weasel) 🪟
-  - [Git and Crumpet](https://f41zk4r1m.github.io/TryHackMe/Git_and_Crumpet) 🐧🍵
+  - [Git and Crumpets](https://f41zk4r1m.github.io/TryHackMe/Git_and_Crumpets) 🐧🍵
 
 ## Hard Boxes:
 
