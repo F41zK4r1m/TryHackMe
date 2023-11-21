@@ -231,3 +231,68 @@ SF:\x20Git\x20service\x20written\x20in\x20Go\"\x20/>\n\t<meta\x20name=\"ke
 SF:ywords\"\x20content=\"");
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
+
+After observing these many open ports I browsed through them one by one:
+
+  - port 6443
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/ad46ee9a-f5cc-4b87-86f7-9dcbb1f71581)
+
+  - port 10250
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/bdbe5a61-191f-411e-adfc-ab60fb672c14)
+
+  - port 30180
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/a7eb9977-af18-4ec0-81a7-549fbc4e0cb1)
+
+  - port 31111
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/fc343094-7892-471a-8438-3a7b0a895cbe)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+### Web & Git Enumeration:
+
+Port 6443 & 10250 are being in use by the kubernetes cluster whereas port 30180 & 31111 are having http services running.
+Since on port 31111 git application is running, I registered my self using a username "nimda" & in the explore section I observed another user "leeroy":
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/6bca129f-ab52-4da9-92b9-8547c8963b7a)
+
+Although currently I can't see any data into the leeroy profile:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/d603e9d5-e4a7-4c28-94e6-eb1377407a7e)
+
+On the other hand I observed another sub-directory '/team' in the http host running on port 30180:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/9b0db239-b0a2-43d2-9940-56daf81b3d31)
+
+Browsing through this page I got this message:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/b6451e5e-b46f-4fe9-a406-b3a605668b06)
+
+And going through the source code of the page I found base64 encoded pdf file "uninteresting_file.pdf":
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/087c11b8-106f-4bd1-a81c-937d9d3d486f)
+
+When I tried to open this file I observed that this file is password protected:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/433387fd-cfac-4cf8-8aa6-e23862e44a7d)
+
+I used "pdf2john" to convert the file into JohnTheRipper format, to crack the password :
+
+```bash
+pdf2john uninteresting_file.pdf > pdf.hash
+```
+Once the file is converted I used John to crack the file using rockyou wordlist:
+
+```bash
+john --wordlist=/usr/share/wordlists/rockyou.txt pdf.hash
+```
+In just few moments I got the password of the file:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/2f427596-a466-4f20-90ae-87c6673b78a3)
+
+Using this password when I opened the PDF file I observed another password like string, which seems like passwrod for the user "leeroy":
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/4d5a1f73-70f0-4532-9ebe-9d214ba263a9)
