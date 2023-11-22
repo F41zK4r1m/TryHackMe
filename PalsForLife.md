@@ -296,3 +296,21 @@ In just few moments I got the password of the file:
 Using this password when I opened the PDF file I observed another password like string, which seems like passwrod for the user "leeroy":
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/4d5a1f73-70f0-4532-9ebe-9d214ba263a9)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+### Flag1:
+
+Using those credential I am finally able to log in into Lerroy account:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/97209883-67c1-4d63-8505-71c363e0d586)
+
+Leeroy account is only having 1 single repository but after enumerating for sometime I found secret in GitHook section:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/ab28a140-828d-44dc-8773-dd4b0a4a5d4c)
+
+Although the secret isn't in the plain text but checking the source code of the webpage I found the clear text secret which is the first flag of this room: (pwn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/4213d367-2c71-4adc-b5aa-d1bc0b1b34f2)
+
+
