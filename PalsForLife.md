@@ -305,7 +305,7 @@ Using those credential I am finally able to log in into Lerroy account:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/97209883-67c1-4d63-8505-71c363e0d586)
 
-Leeroy account is only having 1 single repository but after enumerating for sometime I found secret in GitHook section:
+Leeroy account is only having 1 single repository but after enumerating for sometime I found secret in webhook section:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/ab28a140-828d-44dc-8773-dd4b0a4a5d4c)
 
