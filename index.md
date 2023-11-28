@@ -16,6 +16,7 @@
   - [Annie](https://f41zk4r1m.github.io/TryHackMe/Annie) 🐧
   - [Weasel](https://f41zk4r1m.github.io/TryHackMe/Weasel) 🪟
   - [Git and Crumpets](https://f41zk4r1m.github.io/TryHackMe/Git_and_Crumpets) 🐧🍵
+  - [PalsForLife](https://f41zk4r1m.github.io/TryHackMe/PalsForLife) 🐧
 
 ## Hard Boxes:
 
