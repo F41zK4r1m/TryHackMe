@@ -439,6 +439,6 @@ As soon as the POD creation was complete, I received a connection back on my net
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/68161b93-478b-4b93-b36b-fdfe464f2c12)
 
-Navigating to the "/mnt" folder, which contains data from the "/", I discovered the 4th flag in the root directory: (pwn3d!🙂)
+Navigating to the "/mnt" folder, which contains data from the "/", I discovered the 4th flag in the root directory:(pwn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/6cb5fef6-a231-4247-b762-fcc7ed050ac0)
