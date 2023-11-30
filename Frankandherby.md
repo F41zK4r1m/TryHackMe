@@ -371,4 +371,27 @@ Going through these open ports one by one:
 
 ### Web enumeration:
 
-Moving further I started the web enumeration on port 31337 
+Moving further I started the web enumeration on port 3000 & 31337, while on port 3000 I observed rocket chat application:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/12957566-8f1f-4f9a-bfb2-72c84511e552)
+
+On port 31337 I observed few sub-directories:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/621d0c5a-44d2-48c4-8e2b-9424c848431f)
+
+In these 4 results I observed an intresting directory called ".git-credentials".
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Initial access:
+
+Browsing on ".git-credentials" directory revealed a filed which contains credentials for Frank in urlencoded format:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/01f292f7-90b4-4430-b212-337656c231d4)
+
+Decoding the above credentials above I tried to login via SSH using the Frank account & using these credentials I finally got the initial access & also got the user flag in his folder. (pwnn3d!🙂)
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/121711c7-a864-47ae-b551-b9e64d6dee84)
+
+
+
