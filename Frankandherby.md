@@ -6,7 +6,7 @@ https://tryhackme.com/room/frankandherby
 
 ## Enumeration:
 
-I started my enumeration using rustscan for ports & service scan:
+I initiated the enumeration process by conducting a port and service scan using rustscan:
 
 ```bash
 sudo rustscan -a 10.10.99.202 -- -sC -sV -vv -oN frank_nmap
@@ -333,9 +333,10 @@ PORT      STATE SERVICE     REASON         VERSION
 |_http-title: Site doesn't have a title.
 ```
 
-Going through these open ports one by one:
+Subsequently, I systematically investigated the open ports one by one:
 
-  - Port 3000: There is a Rocket chat application running.
+  - Port 3000:
+    There is a Rocket chat application running.
     
     ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/6f010c35-ccac-4b46-9ae9-cc9066882063)
 
@@ -371,63 +372,60 @@ Going through these open ports one by one:
 
 ### Web enumeration:
 
-Moving further I started the web enumeration on port 3000 & 31337, while on port 3000 I observed rocket chat application:
+Continuing with the web enumeration, I explored ports 3000 and 31337. On port 3000, I encountered a Rocket Chat application:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/12957566-8f1f-4f9a-bfb2-72c84511e552)
 
-On port 31337 I observed few sub-directories:
+Meanwhile, on port 31337, several sub-directories caught my attention:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/621d0c5a-44d2-48c4-8e2b-9424c848431f)
 
-In these 4 results I observed an intresting directory called ".git-credentials".
+Among these results, a particularly interesting directory stood out: ".git-credentials".
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## Initial access:
 
-Browsing on ".git-credentials" directory revealed a filed which contains credentials for Frank in urlencoded format:
+Upon discovering the ".git-credentials" directory, I found a file containing Frank's credentials in urlencoded format:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/01f292f7-90b4-4430-b212-337656c231d4)
 
-Decoding the above credentials above I tried to login via SSH using the Frank account & using these credentials I finally got the initial access & also got the user flag in his folder. (pwnn3d!🙂)
+Decoding the credentials, I attempted to log in via SSH using the Frank account. Successfully authenticating with these credentials, I gained initial access and secured the user flag in Frank's home directory. (pwnn3d!🙂)
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/121711c7-a864-47ae-b551-b9e64d6dee84)
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-## Privilege escalation:
+## Privilege Escalation:
 
-To get the root flag I should have to obtain the root access & to obtain the root privileges I have to escalate my current privileges. 
-So, I started my enumeration with checking the sudo privileges but Frank is not having any suod privileges assigned:
+To attain the root flag, I needed to escalate my current privileges. I began my enumeration by checking Frank's sudo privileges, but it revealed that Frank does not have any sudo privileges assigned:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/d2059fa1-2734-491c-b47a-f156ccb2d2c4)
 
-Moving further I checked any scheduled tasks running in the host but there isn't anything running:
+Further investigation into scheduled tasks on the host indicated that there were no running tasks.
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/4b0c3bb5-62de-46d8-a6d3-09db0417c80a)
 
-I didn't executed the linpeas as the root is mostly fall into kubernetes & followed the hint from the THM page:
+Since linpeas wasn't executed, and considering that root is typically found within Kubernetes, I followed the hint provided on the THM page:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/de600f14-2dbe-4e4a-b1f7-150d01b4ce5b)
 
-Using this hint I used a tool called "[kube-hunter](https://github.com/aquasecurity/kube-hunter)" which can scan the target remotely. Leveraging this tool I scanned the target host:
+Following the hint, I used a tool called "[kube-hunter](https://github.com/aquasecurity/kube-hunter)" to remotely scan the target. The scan revealed potential Kubernetes vulnerabilities:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/be2daac3-5eb5-4668-9f14-196a85c66efa)
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/ecc32e80-ed24-42f0-a918-6160577adb04)
 
-Now, Since I have confirmed that I can escalate my privileges using on the the vulnerable container & also Frank is in the microk8s group.
-
-I searched for microK8s privilege escalation & found this blog by [PulseSecurity](https://pulsesecurity.co.nz/advisories/microk8s-privilege-escalation) & also started checking for the microk8s:
+Upon confirming that I could escalate my privileges on a vulnerable container, and considering that Frank is in the microk8s group, I searched for microK8s privilege escalation. I found a blog post by [PulseSecurity](https://pulsesecurity.co.nz/advisories/microk8s-privilege-escalation) and began examining microK8s:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/f4534f2d-dd90-4f31-b21a-83251bafe2f4)
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/faf154b5-cc96-407e-a15b-4f4d13a85871)
 
-I observed a pod kubectl, for which I checked the details further & found nginx-deployement pod is running inside it:
+I noticed a pod named "kubectl," and upon further investigation, I found that it was running the nginx-deployment pod inside it:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/eb1cbcd8-f090-4251-83cf-f40abe68ba14)
 
-Again I checked the pod details using below command & found these details which revealed the image & image ID:
+Checking the pod details using the command below revealed details about the image and image ID:
 
 ```bash
 microk8s.kubectl get pods nginx-deployment-7b548976fd-77v4r -o yaml
@@ -436,7 +434,7 @@ microk8s.kubectl get pods nginx-deployment-7b548976fd-77v4r -o yaml
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/0e1d1ef7-afe7-49a5-a883-5b78a021331d)
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/c17c6b6c-b09a-413b-b370-4c635c5b736d)
 
-Now, as I have the image name & ID I create my malicious pod accroding to the POC & get the root shell. The yaml file for the pod creation is looking like this after changing the pod name:
+Now, armed with the image name and ID, I created a malicious pod according to the PoC and obtained the root shell. The yaml file for creating the pod looked like this after modifying the pod name:
 
 ```yaml
 apiVersion: v1                                                                                                                                                                                                                             
@@ -461,20 +459,20 @@ spec:
       type: Directory
 ```
 
-After which I pushed the yaml file for pod creation:
+After modifying the yaml file, I pushed it to create the pod:
 
 ```bash
 microk8s.kubectl apply -f pod.yaml
 ```
 
-Once the pod was created I executed the bash using the hostmount commamd by following the poc:
+Once the pod was created, I executed bash using the hostmount command by following the PoC:
 
 ```bash
 microk8s.kubectl exec -it hostmount /bin/bash
 ```
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/812d8d08-42e0-4f91-8c4a-c832e23476ae)
 
-Once the execution was successfull I finally got the root shell & also mounted the root folder in '/opt/root' path, due to which I was finally able to extract the root flag.(pwn3d! 🙂)
+With the successful execution, I finally obtained the root shell and mounted the root folder in '/opt/root.' I was then able to extract the root flag. (pwn3d! 🙂)
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/d68d47d3-0798-467f-8db1-3626aee49f8f)
 
