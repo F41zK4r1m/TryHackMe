@@ -18,7 +18,7 @@
   - [Git and Crumpets](https://f41zk4r1m.github.io/TryHackMe/Git_and_Crumpets) 🐧🍵
   - [PalsForLife](https://f41zk4r1m.github.io/TryHackMe/PalsForLife) 🐧
   - [Frankandherby](https://f41zk4r1m.github.io/TryHackMe/Frankandherby) 🐧
-  - [Frank and herby try again.md](https://f41zk4r1m.github.io/TryHackMe/Frank_and_herby_try_again.md) 🐧
+  - [Frank and herby try again](https://f41zk4r1m.github.io/TryHackMe/Frank_and_herby_try_again.md) 🐧
 
 ## Hard Boxes:
 
