@@ -19,6 +19,7 @@
   - [PalsForLife](https://f41zk4r1m.github.io/TryHackMe/PalsForLife) 🐧
   - [Frankandherby](https://f41zk4r1m.github.io/TryHackMe/Frankandherby) 🐧
   - [Frank and herby try again](https://f41zk4r1m.github.io/TryHackMe/Frank_and_herby_try_again.md) 🐧
+  - [Stealth](https://f41zk4r1m.github.io/TryHackMe/Stealth.md) 🪟
 
 ## Hard Boxes:
 
