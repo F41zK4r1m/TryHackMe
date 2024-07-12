@@ -20,6 +20,7 @@
   - [Frankandherby](https://f41zk4r1m.github.io/TryHackMe/Frankandherby) 🐧
   - [Frank and herby try again](https://f41zk4r1m.github.io/TryHackMe/Frank_and_herby_try_again.md) 🐧
   - [Stealth](https://f41zk4r1m.github.io/TryHackMe/Stealth.md) 🪟
+  - [HackSmarter](https://f41zk4r1m.github.io/TryHackMe/HackSmarter.md) 🪟
 
 ## Hard Boxes:
 
