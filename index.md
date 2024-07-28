@@ -25,6 +25,7 @@
 ## Hard Boxes:
 
   - [Fusin corp](https://f41zk4r1m.github.io/TryHackMe/Fusin_corp) 🪟
+  - [Year_of_the_fox](https://f41zk4r1m.github.io/TryHackMe/YearOfTheFox) 🐧
 
 ## Insane Boxes:
 
